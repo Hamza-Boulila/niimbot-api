@@ -384,7 +384,35 @@ print_label("label.png")
 | On the same Mac (`localhost:3000` etc.) | Nothing, it just works |
 | As a website on the internet, printing from **your browser** on this Mac | Add the site to `NIIMBOT_CORS_ORIGINS` (section 3) |
 | On another computer/phone on the **same Wi-Fi** | In `.env`: `NIIMBOT_HOST=0.0.0.0` + `NIIMBOT_API_KEY=…`; call `http://<your-mac-ip>:8000` (find the IP with `ipconfig getifaddr en0`) |
-| On a **cloud server** (backend prints by itself) | Expose the print server with a tunnel and set an API key: `cloudflared tunnel --url http://127.0.0.1:8000`, or `tailscale funnel 8000`. Use the https URL it gives you as `PRINTER_URL` |
+| On a **cloud server** / **online app** | Expose the print server with Tailscale Funnel or Cloudflare Tunnel (see below) |
+
+### Exposing your server online with Tailscale Funnel
+
+If your website or backend runs on the internet (e.g., Vercel, Netlify, AWS) and needs to send print jobs to your local Mac over HTTPS:
+
+> ⚠️ Funnel makes the print server reachable by **anyone on the internet**. Set `NIIMBOT_API_KEY` in `.env` first,
+> and if browsers on your site call it directly, add the site to `NIIMBOT_CORS_ORIGINS`.
+
+1. **Install Tailscale CLI**:
+   ```sh
+   brew install tailscale
+   ```
+
+2. **Start the Tailscale service & authenticate**:
+   ```sh
+   sudo brew services start tailscale
+   sudo tailscale up
+   ```
+   *(Open the authentication link in your browser to log in)*
+
+3. **Expose your print server (port 8000)**:
+   ```sh
+   tailscale funnel --bg 8000
+   ```
+   *(If prompted, click the link to enable Funnel in your Tailscale admin console)*
+
+4. **Use your public HTTPS URL**:
+   Tailscale provides a secure HTTPS URL (e.g. `https://your-mac.tail1234.ts.net`). Use this URL as your `PRINTER_URL` or in your JavaScript client (`new NiimbotClient("https://your-mac.tail1234.ts.net", { apiKey: "..." })`).
 
 ---
 
