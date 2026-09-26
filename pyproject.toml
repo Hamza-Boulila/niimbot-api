@@ -3,6 +3,9 @@ name = "niimbot-api"
 version = "0.2.0"
 description = "HTTP API and CLI for printing images on Niimbot label printers, built on niimprint"
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE", "NOTICE", "src/niimbot_api/niimprint/LICENSE"]
+authors = [{ name = "Hamza Boulila", email = "hamza.boulila@outlook.com" }]
 requires-python = ">=3.11"
 dependencies = [
     "bleak>=0.22",

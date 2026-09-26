@@ -1,0 +1,9 @@
+niimbot-api
+Copyright (c) 2026 Hamza Boulila, MIT License (see LICENSE)
+
+This project includes third-party code:
+
+src/niimbot_api/niimprint/ is derived from niimprint
+(https://github.com/kjy00302/niimprint, fork https://github.com/AndBondStyle/niimprint),
+Copyright (c) 2023 kjy00302, licensed under the MIT License.
+See src/niimbot_api/niimprint/LICENSE for the full notice.

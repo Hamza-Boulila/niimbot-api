@@ -2,8 +2,7 @@
 
 A local print server for Niimbot label printers (B1, B18, B21, D11, D110). Any web app,
 backend or script can print images on the printer through a small HTTP API.
-Built on [niimprint](https://github.com/AndBondStyle/niimprint), which is included under `src/niimbot_api/niimprint`
-(MIT).
+Built on [niimprint](https://github.com/AndBondStyle/niimprint); see [Credits](#credits).
 
 ```
 your web app ──HTTP──▶ niimbot-api (this, on the computer near the printer) ──BLE/USB──▶ printer
@@ -171,3 +170,22 @@ uv run niimbot scan
 ```sh
 uv run pytest     # simulated printer, no hardware needed
 ```
+
+## Credits
+
+This project stands on the work of others. Thank you!
+
+- **[niimprint](https://github.com/kjy00302/niimprint)** by [kjy00302](https://github.com/kjy00302): the original
+  Python client that figured out the Niimbot protocol (MIT).
+- **[niimprint fork](https://github.com/AndBondStyle/niimprint)** by [AndBondStyle](https://github.com/AndBondStyle):
+  transport abstraction, multi-model support and cleanup. It is included (with fixes) in
+  `src/niimbot_api/niimprint/` under its MIT license.
+- **[NiimBlue / niimbluelib](https://github.com/MultiMote/niimblue)** by [MultiMote](https://github.com/MultiMote):
+  its protocol research was the reference for the newer B1 print sequence and the BLE service.
+- Built with [bleak](https://github.com/hbldh/bleak), [FastAPI](https://fastapi.tiangolo.com/),
+  [Pillow](https://python-pillow.org/) and [pySerial](https://github.com/pyserial/pyserial).
+
+## License
+
+[MIT](LICENSE) © 2026 Hamza Boulila. The included niimprint code remains © 2023 kjy00302 under the MIT
+license ([notice](src/niimbot_api/niimprint/LICENSE)).
