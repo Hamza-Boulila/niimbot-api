@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Niimbot Print</title>
+<style>
+  :root {
+    --bg: #f6f6f4; --panel: #fff; --text: #1c1c1a; --muted: #6b6b66; --line: #e2e2dd;
+    --accent: #2f5bd3; --accent-text: #fff; --ok: #1f7a4d; --err: #b3261e; --label: #fff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #151514; --panel: #1f1f1d; --text: #ececea; --muted: #9a9a94; --line: #33332f;
+      --accent: #7a9cff; --accent-text: #0d1330; --ok: #5cc98f; --err: #ff8a80; --label: #f4f4f0;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  main { max-width: 980px; margin: 0 auto; padding: 32px 16px 64px; }
+  header { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  h1 { font-size: 22px; margin: 0; letter-spacing: -0.01em; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 12px; font-weight: 600; }
+  .status { color: var(--muted); font-size: 14px; }
+  .status b { color: var(--text); font-weight: 600; }
+  .grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; margin-top: 24px; }
+  @media (max-width: 760px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 20px; }
+  .drop { border: 1.5px dashed var(--line); border-radius: 10px; padding: 28px 16px; text-align: center;
+    color: var(--muted); cursor: pointer; transition: border-color .15s; }
+  .drop.over, .drop:hover { border-color: var(--accent); }
+  .drop strong { color: var(--text); display: block; overflow-wrap: anywhere; }
+  .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+  label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
+  label.check { flex-direction: row; align-items: center; gap: 8px; color: var(--text); }
+  input, select { font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--line);
+    border-radius: 8px; padding: 7px 10px; min-width: 0; }
+  input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--accent); }
+  .actions { display: flex; gap: 8px; margin-top: 18px; }
+  button { font: inherit; font-weight: 600; border-radius: 8px; padding: 9px 16px; cursor: pointer;
+    border: 1px solid var(--line); background: var(--bg); color: var(--text); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); flex: 1; }
+  button:disabled { opacity: .5; cursor: default; }
+  button:focus-visible, input:focus-visible, select:focus-visible, .drop:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .preview { display: flex; align-items: center; justify-content: center; min-height: 220px;
+    background: repeating-conic-gradient(var(--line) 0 25%, transparent 0 50%) 0 0 / 16px 16px; border-radius: 10px; padding: 16px; }
+  .preview img { max-width: 100%; background: var(--label); box-shadow: 0 1px 4px rgba(0,0,0,.25); border-radius: 4px; image-rendering: pixelated; }
+  .preview p { color: var(--muted); margin: 0; }
+  .meta { color: var(--muted); font-size: 13px; margin-top: 10px; min-height: 20px; }
+  .msg { margin-top: 12px; font-size: 14px; min-height: 21px; }
+  .msg.ok { color: var(--ok); } .msg.err { color: var(--err); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  td, th { text-align: left; padding: 6px 8px 6px 0; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  th { color: var(--muted); font-weight: 500; }
+  td.err { color: var(--err); white-space: normal; }
+  .wide { grid-column: 1 / -1; }
+  .key { margin-top: 12px; }
+  code { font: 12.5px ui-monospace, SFMono-Regular, Menlo, monospace; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Niimbot Print</h1>
+    <div class="status" id="printer">Connecting to server…</div>
+  </header>
+
+  <div class="grid">
+    <section>
+      <h2>Image</h2>
+      <div class="drop" id="drop" tabindex="0" role="button" aria-label="Choose an image">
+        <strong id="fname">Drop an image here</strong>or click to choose
+      </div>
+      <input type="file" id="file" accept="image/*" hidden>
+
+      <div class="fields">
+        <label>Label width (mm)<input id="labelWidthMm" type="number" min="1" step="0.5" placeholder="server default"></label>
+        <label>Label height (mm)<input id="labelHeightMm" type="number" min="1" step="0.5" placeholder="server default"></label>
+        <label>Fit
+          <select id="fit"><option>contain</option><option>cover</option><option>stretch</option><option>none</option></select>
+        </label>
+        <label>Rotate
+          <select id="rotate"><option value="0">0°</option><option value="90">90°</option><option value="180">180°</option><option value="270">270°</option></select>
+        </label>
+        <label>Density<input id="density" type="number" min="1" max="5" placeholder="default"></label>
+        <label>Copies<input id="copies" type="number" min="1" max="100" value="1"></label>
+        <label class="check"><input id="dither" type="checkbox" checked> Dither (photos)</label>
+        <label class="check"><input id="invert" type="checkbox"> Invert</label>
+      </div>
+      <label class="key">API key (only if the server requires one)<input id="apiKey" type="password" autocomplete="off"></label>
+
+      <div class="actions">
+        <button class="primary" id="printBtn" disabled>Print</button>
+      </div>
+      <div class="msg" id="msg" role="status"></div>
+    </section>
+
+    <section>
+      <h2>Preview (what the printer gets)</h2>
+      <div class="preview" id="preview"><p>Choose an image to preview</p></div>
+      <div class="meta" id="meta"></div>
+    </section>
+
+    <section class="wide">
+      <h2>Recent jobs</h2>
+      <table>
+        <thead><tr><th>Time</th><th>Status</th><th>Size</th><th>Copies</th><th>Source</th><th>Error</th></tr></thead>
+        <tbody id="jobs"><tr><td colspan="6">No jobs yet</td></tr></tbody>
+      </table>
+      <p class="meta">API docs at <a href="docs">/docs</a> · JS client at <code>/niimbot-client.js</code></p>
+    </section>
+  </div>
+</main>
+
+<script type="module">
+import { NiimbotClient } from "./niimbot-client.js";
+
+// Works at / and when mounted under a prefix (e.g. /printer/)
+const BASE = new URL(".", location.href).href.replace(/\/$/, "");
+
+const $ = (id) => document.getElementById(id);
+const store = { get: (k) => { try { return localStorage.getItem(k); } catch { return null; } },
+                set: (k, v) => { try { localStorage.setItem(k, v); } catch {} } };
+$("apiKey").value = store.get("niimbot.apiKey") || "";
+const client = () => new NiimbotClient(BASE, { apiKey: $("apiKey").value || undefined });
+
+let file = null, previewUrl = null, timer = null;
+
+function options() {
+  const num = (id) => ($(id).value === "" ? undefined : Number($(id).value));
+  return {
+    labelWidthMm: num("labelWidthMm"), labelHeightMm: num("labelHeightMm"),
+    fit: $("fit").value, rotate: Number($("rotate").value),
+    dither: $("dither").checked, invert: $("invert").checked,
+    density: num("density"), copies: num("copies") || 1, source: "web demo",
+  };
+}
+
+function setMsg(text, kind = "") { $("msg").textContent = text; $("msg").className = "msg " + kind; }
+
+async function refreshPreview() {
+  if (!file) return;
+  const { density, copies, source, ...imgOpts } = options();
+  try {
+    const blob = await client().preview(file, imgOpts);
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    previewUrl = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => { $("meta").textContent = `${img.naturalWidth} × ${img.naturalHeight} px · ${(img.naturalWidth / 8).toFixed(1)} × ${(img.naturalHeight / 8).toFixed(1)} mm`; };
+    img.src = previewUrl; img.alt = "Print preview";
+    $("preview").replaceChildren(img);
+    setMsg("");
+    $("printBtn").disabled = false;
+  } catch (e) {
+    $("preview").replaceChildren(Object.assign(document.createElement("p"), { textContent: e.message }));
+    $("meta").textContent = "";
+    $("printBtn").disabled = true;
+  }
+}
+const schedulePreview = () => { clearTimeout(timer); timer = setTimeout(refreshPreview, 200); };
+
+function pick(f) {
+  if (!f) return;
+  file = f; $("fname").textContent = f.name; refreshPreview();
+}
+
+$("drop").onclick = () => $("file").click();
+$("drop").onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); $("file").click(); } };
+$("file").onchange = (e) => pick(e.target.files[0]);
+$("drop").ondragover = (e) => { e.preventDefault(); $("drop").classList.add("over"); };
+$("drop").ondragleave = () => $("drop").classList.remove("over");
+$("drop").ondrop = (e) => { e.preventDefault(); $("drop").classList.remove("over"); pick(e.dataTransfer.files[0]); };
+document.onpaste = (e) => { const f = [...e.clipboardData.files][0]; if (f) pick(f); };
+for (const id of ["labelWidthMm", "labelHeightMm", "fit", "rotate", "dither", "invert"]) $(id).oninput = schedulePreview;
+$("apiKey").onchange = () => { store.set("niimbot.apiKey", $("apiKey").value); loadPrinter(); loadJobs(); };
+
+$("printBtn").onclick = async () => {
+  $("printBtn").disabled = true;
+  setMsg("Printing…");
+  try {
+    const job = await client().print(file, options());
+    setMsg(job.status === "done" ? "Printed." : `Queued (${job.jobs_ahead ?? 0} ahead).`, "ok");
+  } catch (e) {
+    setMsg(e.message, "err");
+  } finally {
+    $("printBtn").disabled = false;
+    loadJobs(); loadPrinter();
+  }
+};
+
+async function loadPrinter() {
+  try {
+    const p = await client().printer();
+    const label = p.label_width_mm ? ` · default label ${p.label_width_mm}×${p.label_height_mm ?? "auto"} mm` : "";
+    $("printer").innerHTML = `<b>${p.model.toUpperCase()}</b> via ${p.conn}${p.addr ? " (" + p.addr + ")" : ""} · ${p.connected ? "connected" : "idle"}${label}${p.pending_jobs ? ` · ${p.pending_jobs} in queue` : ""}`;
+  } catch (e) {
+    $("printer").textContent = e.status === 401 ? "Enter the API key below" : e.message;
+  }
+}
+
+async function loadJobs() {
+  try {
+    const jobs = await client().jobs(10);
+    if (!jobs.length) return;
+    $("jobs").replaceChildren(...jobs.map((j) => {
+      const tr = document.createElement("tr");
+      const cells = [new Date(j.created_at * 1000).toLocaleTimeString(), j.status,
+        `${j.width_px}×${j.height_px}`, j.copies, j.source ?? "", j.error ?? ""];
+      cells.forEach((c, i) => { const td = document.createElement("td"); td.textContent = c; if (i === 5 && c) td.className = "err"; tr.append(td); });
+      return tr;
+    }));
+  } catch {}
+}
+
+loadPrinter(); loadJobs();
+setInterval(() => { loadPrinter(); loadJobs(); }, 5000);
+</script>
+</body>
+</html>
