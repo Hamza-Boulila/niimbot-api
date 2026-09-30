@@ -1,5 +1,12 @@
 # niimbot-api
 
+> [!WARNING]
+> **This is not an official Niimbot product.** It is an independent, community-made project and is not
+> affiliated with, endorsed by, or supported by Niimbot or its parent company. "Niimbot" and the printer model
+> names are trademarks of their respective owners and are used here only to describe compatibility. The printer
+> protocol was reverse-engineered, so a firmware update may break it at any time. Use at your own risk; see
+> [Disclaimer](#disclaimer).
+
 A local print server for Niimbot label printers (B1, B18, B21, D11, D110). Any web app,
 backend or script can print images on the printer through a small HTTP API.
 Built on [niimprint](https://github.com/AndBondStyle/niimprint); see [Credits](#credits).
@@ -143,11 +150,34 @@ All endpoints are under `/v1`. The full schema is at `/docs`.
 
 ## Running in the background (macOS)
 
+The install script sets the server up as a macOS LaunchAgent (`com.niimbot.api`). The server then keeps running
+after you close the terminal, restarts itself if it crashes, and starts again automatically each time you log in,
+including after a shutdown or reboot.
+
 ```sh
-scripts/install-service.sh            # starts now and at every login, restarts on crash
-scripts/install-service.sh uninstall
+# Install and start (run from the project folder)
+scripts/install-service.sh
+
+# If `uv` is not on your PATH (e.g. installed in ~/.local/bin):
+PATH="$HOME/.local/bin:$PATH" sh scripts/install-service.sh
+
+# Check that it is running
+curl http://127.0.0.1:8000/health
+launchctl print gui/$(id -u)/com.niimbot.api | grep -E "state|pid"
+
+# Watch the logs
 tail -f logs/server.log
+
+# Restart it (e.g. after editing .env)
+launchctl kickstart -k gui/$(id -u)/com.niimbot.api
+
+# Stop it and remove it from startup
+PATH="$HOME/.local/bin:$PATH" sh scripts/install-service.sh uninstall
 ```
+
+**Starting after a power-on.** The service starts when you log in, not at the login screen, because macOS only
+allows Bluetooth for a logged-in user. To have it start with nobody at the Mac, turn on System Settings ›
+Users & Groups › "Automatically log in as…". macOS won't allow automatic login while FileVault is on.
 
 It reads `.env` from the project folder. If Bluetooth fails only when running as a service, allow Bluetooth for the
 Python binary in System Settings › Privacy & Security › Bluetooth, or run `uv run niimbot serve` in a
@@ -184,6 +214,18 @@ This project stands on the work of others. Thank you!
   its protocol research was the reference for the newer B1 print sequence and the BLE service.
 - Built with [bleak](https://github.com/hbldh/bleak), [FastAPI](https://fastapi.tiangolo.com/),
   [Pillow](https://python-pillow.org/) and [pySerial](https://github.com/pyserial/pyserial).
+
+## Disclaimer
+
+This project is **not** an official Niimbot product. It is not affiliated with, endorsed by, sponsored by, or
+supported by Niimbot (Wuhan Jingchen Intelligent Identification Technology Co., Ltd.). All product names,
+trademarks and registered trademarks belong to their respective owners and are used here only to identify
+compatible hardware.
+
+The printer protocol comes from community reverse-engineering, not official documentation. It may stop working
+after a printer firmware update. The software is provided "as is", without warranty of any kind (see
+[LICENSE](LICENSE)). The authors are not responsible for any damage to your printer, labels or data. For official
+software and support, use Niimbot's own apps.
 
 ## License
 
